@@ -25,7 +25,7 @@ type State struct {
 
 func main() {
 	flag.Parse()
-	fmt.Println("FXTM deploy bot service v." + TAG)
+	fmt.Println("Deploy bot service v." + TAG)
 
     cfgReader := NewConfigReader(*flagConfig, *flagTokens)
     config, err := cfgReader.load()
