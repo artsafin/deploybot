@@ -1,9 +1,0 @@
-telegram_token: 204711054:AAEf7Kj2J_ksoOfCnWYQ6QvkEbdUJ-X20qI
-listen: localhost:8182
-services:
-  - fx-cms
-  - fx-money
-  - fx-oldmy
-  - fx-api  
-  - my-frontend
-  - my-drupal
