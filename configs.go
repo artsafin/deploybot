@@ -10,6 +10,9 @@ type Config struct {
     Telegram_token string
     Listen string
     Services []string
+    Db struct {
+        Sqlite string
+    }
     access struct {
         Version string
         Tokens []string

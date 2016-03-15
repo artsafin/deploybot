@@ -14,7 +14,7 @@ var (
     flagBotDebug = flag.Bool("botdebug", false, "Log network activity of bot")
     flagTestConfig = flag.Bool("testconfig", false, "Test config for errors and exit")
     flagConfig = flag.String("config", "config.yml", "Path to config file")
-	flagTokens = flag.String("tokens", "access_tokens.yml", "Path to tokens file")
+    flagTokens = flag.String("tokens", "access_tokens.yml", "Path to tokens file")
 )
 
 type State struct {
@@ -25,7 +25,7 @@ type State struct {
 
 func main() {
 	flag.Parse()
-	fmt.Println("Deploy bot service v." + TAG)
+	fmt.Println("Deploy bot service, version:" + TAG)
 
     cfgReader := NewConfigReader(*flagConfig, *flagTokens)
     config, err := cfgReader.load()
@@ -40,8 +40,13 @@ func main() {
         os.Exit(0)
     }
 
-    ns, regs := NewNotifications(), NewRegistrations()
-    state := &State{&ns, &regs, config}
+    fmt.Println("Listening", config.Listen)
+
+    repo := NewRepository(config.Db.Sqlite)
+    defer repo.db.Close()
+
+    regs := NewRegistrations()
+    state := &State{repo.getNotifications(), &regs, config}
 
 	baseBot, err := tgbotapi.NewBotAPI(config.Telegram_token)
 	if err != nil {

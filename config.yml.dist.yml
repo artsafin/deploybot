@@ -1,5 +1,7 @@
 telegram_token: 204711054:AAEM1NNz0HX0n-97FSTflf3Cg0H7xbcXbzQ
 listen: localhost:8182
+db:
+  sqlite: ./deploybot.db
 services:
   - fx-cms
   - fx-money
