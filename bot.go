@@ -34,12 +34,12 @@ func (ctrl *BotCtrl) processCommand(update tgbotapi.Update) {
         return
     }
 
-    _, isReg := ctrl.state.regs.get(update.Message.From.ID)
-    user := &User{&update.Message.From, update.Message.Chat.ID, isReg}
+    user, _ := ctrl.state.regs.get(update.Message.From.ID, update.Message.Chat.ID)
+    tguser := &TelegramUser{&update.Message.From, user}
 
     switch msgParts[0] {
     case "/start":
-        msg, err := ctrl.start(user, msgParts[1:])
+        msg, err := ctrl.start(tguser, msgParts[1:])
 
         if err != nil {
             msg = err.Error()
@@ -47,7 +47,7 @@ func (ctrl *BotCtrl) processCommand(update tgbotapi.Update) {
 
         ctrl.bot.Send(ctrl.createReplyMessage(update, msg, nil))
     case "/notify":
-        msg, err := ctrl.notify(user, msgParts[1:])
+        msg, err := ctrl.notify(tguser, msgParts[1:])
 
         if err != nil {
             msg = err.Error()
@@ -55,7 +55,7 @@ func (ctrl *BotCtrl) processCommand(update tgbotapi.Update) {
 
         ctrl.bot.Send(ctrl.createReplyMessage(update, msg, nil))
     case "/forget":
-        msg, err := ctrl.forget(user, msgParts[1:])
+        msg, err := ctrl.forget(tguser, msgParts[1:])
 
         if err != nil {
             msg = err.Error()
@@ -81,8 +81,8 @@ func (ctrl *BotCtrl) createReplyMessage(update tgbotapi.Update, text string, con
     return msg
 }
 
-func (ctrl *BotCtrl) start(user *User, args []string) (string, error) {
-    if user.isReg {
+func (ctrl *BotCtrl) start(user *TelegramUser, args []string) (string, error) {
+    if user.data.isReg {
         return "", fmt.Errorf("You've been already registered")
     }
 
@@ -92,11 +92,11 @@ func (ctrl *BotCtrl) start(user *User, args []string) (string, error) {
 
     token := args[0]
 
-    if !ctrl.state.cfg.hasToken(token) {
+    if !ctrl.state.tokens.has(token) {
         return "", fmt.Errorf("Token not found")
     }
 
-    err := ctrl.state.regs.add(user, token)
+    err := ctrl.state.regs.add(user.data, token)
     if err != nil {
         return "", err
     }
@@ -106,8 +106,8 @@ func (ctrl *BotCtrl) start(user *User, args []string) (string, error) {
     return fmt.Sprintf("%s, you have been registered", user.FirstName), nil
 }
 
-func (ctrl *BotCtrl) notify(user *User, args []string) (string, error) {
-    if !user.isReg {
+func (ctrl *BotCtrl) notify(user *TelegramUser, args []string) (string, error) {
+    if !user.data.isReg {
         return "", fmt.Errorf("You're not registered.\nFirst issue <code>/start token</code>")
     }
 
@@ -121,12 +121,12 @@ func (ctrl *BotCtrl) notify(user *User, args []string) (string, error) {
         return "", fmt.Errorf("Notification type is not supported")
     }
 
-    ctrl.state.ns.subscribeUser(service, user)
+    ctrl.state.ns.subscribeUser(service, user.data)
     return fmt.Sprintf("You are now subscribed to %s events", service), nil
 }
 
-func (ctrl *BotCtrl) forget(user *User, args []string) (string, error) {
-    if !user.isReg {
+func (ctrl *BotCtrl) forget(user *TelegramUser, args []string) (string, error) {
+    if !user.data.isReg {
         return "", fmt.Errorf("You're not registered.\nFirst issue <code>/start token</code>")
     }
 
@@ -136,6 +136,6 @@ func (ctrl *BotCtrl) forget(user *User, args []string) (string, error) {
 
     service := args[0]
 
-    ctrl.state.ns.unsubscribeUser(service, user)
+    ctrl.state.ns.unsubscribeUser(service, user.data)
     return fmt.Sprintf("You have been unsubscribed from %s events", service), nil
 }

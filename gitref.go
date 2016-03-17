@@ -1,3 +1,3 @@
 package main
 
-const TAG = "7cda5ee21347f0e4a7f150682f46ef501146cd7a"
+const TAG = "7c404374a984a5cf5b9f6fd9801fb8baf3f2fda3"

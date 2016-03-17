@@ -68,23 +68,25 @@ func ConsumeEvents(state *State, bot DeployBotAPI, ch <-chan event) {
     }
 }
 
-func onEvent(regs *Registrations, userIDs map[int]bool, bot DeployBotAPI, alert event) {
+func onEvent(regs *Registrations, userIdsMap map[int]bool, bot DeployBotAPI, alert event) {
     log.Println("Registered alert:", alert)
 
-    for userId := range userIDs {
-        var text string
-        if len(alert.comment) > 0 {
-            text = fmt.Sprintf("<b>%s</b> (<b>%s</b>) ref %s has been %s at %v", alert.service, alert.comment, alert.tag, alert.event, alert.ts)
-        } else {
-            text = fmt.Sprintf("<b>%s</b> ref %s has been %s at %v", alert.service, alert.tag, alert.event, alert.ts)
-        }
-        user, exists := regs.get(userId)
+    var text string
+    if len(alert.comment) > 0 {
+        text = fmt.Sprintf("<b>%s</b> (<b>%s</b>) ref %s has been %s at %v", alert.service, alert.comment, alert.tag, alert.event, alert.ts)
+    } else {
+        text = fmt.Sprintf("<b>%s</b> ref %s has been %s at %v", alert.service, alert.tag, alert.event, alert.ts)
+    }
 
-        if !exists {
-            continue
-        }
+    userIds := make([]int, len(userIdsMap))
+    for userId := range userIdsMap {
+        userIds = append(userIds, userId)
+    }
 
-        msg := tgbotapi.NewMessage(user.chatId, text)
+    chatIds := regs.repo.getChats(userIds)
+
+    for _, chatId := range chatIds {
+        msg := tgbotapi.NewMessage(chatId, text)
         msg.ParseMode = "HTML"
         bot.Send(msg)
     }

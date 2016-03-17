@@ -2,64 +2,43 @@ package main
 
 import (
     "database/sql"
-    _ "github.com/mattn/go-sqlite3"
+    "gopkg.in/doug-martin/goqu.v3"
+    _ "gopkg.in/doug-martin/goqu.v3/adapters/sqlite3"
     "log"
 )
 
 type Repository struct {
-    db *sql.DB
+    *goqu.Database
 }
 
-func initScheme(db *sql.DB) {
-    sqlStmt := `
-    create table if not exists notifications (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, service varchar(100), user_id integer);
-    create table if not exists registrations (id integer not null primary key, chat_id integer, token varchar(100));
-    `
+func assertSchemeValid(db *goqu.Database) {
+    // select count(*) from sqlite_master where type='table' and tbl_name in ('registrations', 'notifications', 'access_tokens')
 
-    _, err := db.Exec(sqlStmt)
-    if err != nil {
-        log.Fatalf("%q: %s\n", err, sqlStmt)
+    var count int
+    found, err := db.From("sqlite_master").Select(goqu.COUNT("*")).Where(goqu.Ex{
+            "type": "table",
+            "tbl_name": []string{"registrations", "notifications", "access_tokens"},
+        }).ScanVal(&count)
+
+    if err != nil || !found || count != 3 {
+        log.Fatal("Internal database is corrupt. Do a fresh install with --install flag")
     }
 }
 
-func NewRepository(file string) *Repository {
+func OpenDb(file string) *goqu.Database {
     db, err := sql.Open("sqlite3", file)
     if err != nil {
         log.Fatal(err)
     }
 
-    initScheme(db)
+    return goqu.New("sqlite3", db)
+}
+
+func NewRepository(file string) *Repository {
+    db := OpenDb(file)
+
+    assertSchemeValid(db)
 
     return &Repository{db}
-}
-
-func (me *Repository) getNotifications() *Notifications {
-    rows, err := me.db.Query("select service, user_id from notifications")
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    defer rows.Close()
-
-    ns := NewNotifications()
-    ns.repo = me
-
-    for rows.Next() {
-        var service string
-        var user_id int
-        if err := rows.Scan(&service, &user_id); err == nil {
-            LoadNotification(&ns, service, user_id)
-        }
-    }
-
-    return &ns
-}
-
-func (me *Repository) deleteNotification(service string, userId int) {
-    me.db.Exec("delete from notifications where service=? and user_id=?", service, userId)
-}
-
-func (me *Repository) addNotification(service string, userId int) {
-    me.db.Exec("insert into notifications(service, user_id) values(?, ?)", service, userId)
 }
 
