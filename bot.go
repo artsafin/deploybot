@@ -92,8 +92,10 @@ func (ctrl *BotCtrl) start(user *TelegramUser, args []string) (string, error) {
 
     token := args[0]
 
-    if !ctrl.state.tokens.has(token) {
-        return "", fmt.Errorf("Token not found")
+    availTokens := ctrl.state.repo.getAvailableTokens()
+
+    if !availTokens.has(token) {
+        return "", fmt.Errorf("Token not found, expired or already used")
     }
 
     err := ctrl.state.regs.add(user.data, token)

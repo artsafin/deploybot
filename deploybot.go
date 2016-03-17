@@ -21,7 +21,7 @@ var (
 type State struct {
     ns *Notifications
     regs *Registrations
-    tokens Tokens
+    repo *Repository
     cfg *Config
 }
 
@@ -64,7 +64,7 @@ func main() {
 
     regs := NewRegistrations()
     regs.repo = repo
-    state := &State{repo.getNotifications(), regs, repo.getAvailableTokens(), config}
+    state := &State{repo.getNotifications(), regs, repo, config}
 
 	baseBot, err := tgbotapi.NewBotAPI(config.Telegram_token)
 	if err != nil {
