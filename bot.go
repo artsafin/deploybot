@@ -62,7 +62,7 @@ func (ctrl *BotCtrl) processCommand(update tgbotapi.Update) {
         }
         ctrl.bot.Send(ctrl.createReplyMessage(update, msg, nil))
     case "/ping":
-        msg := fmt.Sprintf("I am @%v, %v #%v and I send this message to any surviving bots", ctrl.bot.Self.UserName, ctrl.bot.Self.FirstName, ctrl.bot.Self.ID)
+        msg := fmt.Sprintf("I am @%v, %v #%v\nversion:%s", ctrl.bot.Self.UserName, ctrl.bot.Self.FirstName, ctrl.bot.Self.ID, TAG)
         ctrl.bot.Send(ctrl.createReplyMessage(update, msg, nil))
     default:
         ctrl.bot.Send(ctrl.createReplyMessage(update, "Sorry?", nil))
